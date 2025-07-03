@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapeando Riquezas: Dashboard Estratégico</title>
+    
+    <!-- Chosen Palette: Authoritative Tech (Dark Blue/Gray, Accent Green/Gold) -->
+    <!-- Application Structure Plan: The SPA is structured as a dashboard. It starts with an "Overview" and "Scaling" section (merged for immediate impact and motivation, featuring a conceptual profit chart). This is followed by the "Method" section, presented as an interactive stepper/accordion to guide the user through 8 detailed steps. Finally, the "Tools" section (now a dedicated bonus step) houses practical, interactive tools like the enhanced Checklist and the AI Script Generator. This structure prioritizes immediate value presentation, a guided learning path, and actionable tools, enhancing usability and engagement. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Profit Potential / Scalability -> Goal: Motivate and illustrate earnings potential early -> Viz: Conceptual Bar Chart (Chart.js/Canvas) showing contact efforts vs. potential earnings -> Interaction: Static chart for illustration -> Justification: Visualizes the core promise of the product upfront, setting expectations and driving engagement. Method: Chart.js (Canvas).
+        - Report Info: Core 8-step methodology -> Goal: Guide user through the process -> Viz: Interactive stepper/accordion with detailed textual content -> Interaction: Click to expand/collapse step content (accordion behavior). Internal checkboxes for "micro-actions" -> Justification: Breaks down complex process into manageable, interactive chunks. Micro-actions provide a sense of progress and gamification. Method: HTML/JS.
+        - Report Info: Checklist bonus -> Goal: Provide a practical tool for diagnosis -> Viz: Interactive form with checkboxes -> Interaction: User checks boxes, score is calculated dynamically -> Justification: Transforms a static list into a functional diagnostic tool, increasing user engagement and practical application. Method: HTML/JS.
+        - Report Info: AI script bonus (enhanced) -> Goal: Provide actionable, personalized sales scripts -> Viz: Interactive form with text inputs, dropdowns, and a *dynamic checklist* -> Interaction: User inputs data and checks problems, generated script adapts automatically -> Justification: Offers instant, personalized value. The dynamic checklist ensures the script is tailored to specific company needs, making the tool highly practical. Method: HTML/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #111827; /* Azul-marinho/Cinza muito escuro */
+            color: #E5E7EB; /* Cinza claro para texto */
+            overflow-x: hidden; /* Previne rolagem horizontal */
+        }
+        .accent-color {
+            color: #34D399; /* Verde esmeralda para destaques */
+        }
+        .highlight-text {
+            color: #8B5CF6; /* Roxo vibrante para destaque, similar ao produto anterior */
+            font-weight: 700; /* Mais negrito para destaque */
+        }
+        .bg-accent {
+            background-color: #34D399;
+        }
+        .border-accent {
+            border-color: #34D399;
+        }
+        .bg-card {
+            background-color: #1F2937; /* Cinza-azulado escuro para cards */
+        }
+        .bg-base {
+            background-color: #111827;
+        }
+        .border-base {
+            border-color: #374151; /* Borda cinza */
+        }
+        .sticky-nav {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .step-item.active .step-number {
+            background-color: #34D399;
+            color: #111827;
+            transform: scale(1.1);
+        }
+        .step-item.active .step-title {
+            color: #34D399;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            box-sizing: border-box;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .accordion-content.expanded {
+            max-height: 2000px; /* Suficiente para expandir todo o conteúdo */
+            padding: 1.5rem; /* Ajusta o padding quando expandido */
+            opacity: 1;
+            visibility: visible;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Limite a largura máxima do gráfico */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Altura base para desktop */
+            max-height: 450px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 280px; /* Altura menor para mobile */
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+
+        <!-- HEADER -->
+        <header class="text-center py-12 border-b-2 border-base">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4">
+                Mapeando <span class="accent-color">Riquezas</span>
+            </h1>
+            <p class="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
+                O dashboard estratégico para transformar o Google Maps em sua fonte de renda consistente e escalável.
+            </p>
+        </header>
+
+        <!-- STICKY NAVIGATION -->
+        <nav id="main-nav" class="sticky-nav bg-base/80 backdrop-blur-lg border-b border-base shadow-lg rounded-full my-8 px-4 py-2">
+            <div class="flex justify-center items-center space-x-2 sm:space-x-4 md:space-x-6">
+                <a href="#overview-scaling" class="nav-link text-gray-300 hover:accent-color transition duration-300 px-3 py-2 text-sm sm:text-base font-semibold rounded-full">Visão Geral & Escalabilidade</a>
+                <a href="#workflow" class="nav-link text-gray-300 hover:accent-color transition duration-300 px-3 py-2 text-sm sm:text-base font-semibold rounded-full">O Fluxo do Trabalho</a>
+                <a href="#method" class="nav-link text-gray-300 hover:accent-color transition duration-300 px-3 py-2 text-sm sm:text-base font-semibold rounded-full">O Método Secreto</a>
+                <a href="#tools-bonus" class="nav-link text-gray-300 hover:accent-color transition duration-300 px-3 py-2 text-sm sm:text-base font-semibold rounded-full">Ferramentas & Bônus</a>
+            </div>
+        </nav>
+
+        <main class="space-y-16 sm:space-y-24">
+
+            <!-- OVERVIEW & SCALING SECTION -->
+            <section id="overview-scaling" class="text-center">
+                <h2 class="text-3xl font-bold text-white mb-10">Sua Jornada para o Lucro Diário Começa Aqui</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base">
+                        <i class="fas fa-sack-dollar fa-3x accent-color mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">Potencial de Ganhos Imediatos</h3>
+                        <p class="text-gray-400">Alcance e ultrapasse R$1.000 já na primeira semana com um método direto e sem capital inicial.</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base">
+                        <i class="fas fa-chart-line fa-3x accent-color mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">Escalabilidade Simplificada</h3>
+                        <p class="text-gray-400">Transforme suas micro-ações em um fluxo de renda consistente e crescente para a sua liberdade financeira.</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base">
+                        <i class="fas fa-hand-holding-usd fa-3x accent-color mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">Zero Investimento Inicial</h3>
+                        <p class="text-gray-400">Utilize apenas seu conhecimento e o Google Maps para construir um negócio lucrativo do zero.</p>
+                    </div>
+                </div>
+
+                <div class="bg-card p-8 rounded-xl shadow-lg border border-base">
+                     <h3 class="text-2xl font-bold text-white mb-6">O Poder da Multiplicação: Contatos x Lucro Diário</h3>
+                     <p class="text-gray-400 mb-6">Veja como poucas ações podem gerar um impacto financeiro surpreendente. A cada contato estratégico, você se aproxima de um novo pagamento, de forma simples e replicável.</p>
+                     <div class="chart-container">
+                        <canvas id="profitChart"></canvas>
+                     </div>
+                     <p class="text-sm text-gray-500 mt-4">Este gráfico é uma representação do potencial de ganhos diários baseado em sua proatividade. Os resultados individuais podem variar.</p>
+                </div>
+            </section>
+
+            <!-- WORKFLOW SECTION - New Section -->
+            <section id="workflow" class="text-center">
+                <h2 class="text-3xl font-bold text-white mb-10">O Fluxo Essencial: Transformando Problemas em Lucro em 4 Etapas</h2>
+                <p class="text-center text-gray-400 max-w-2xl mx-auto mb-12">Antes de mergulharmos nos detalhes do Método Secreto, visualize o processo completo. É simples, direto e incrivelmente eficaz. Este é o esboço da sua operação lucrativa:</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base flex flex-col items-center">
+                        <span class="bg-accent text-gray-900 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl mb-4">1</span>
+                        <h3 class="text-xl font-bold text-white mb-2">Encontrar a Oportunidade</h3>
+                        <p class="text-gray-400 text-sm">Descobrir negócios locais com falhas críticas no Google Maps que ninguém mais vê.</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base flex flex-col items-center">
+                        <span class="bg-accent text-gray-900 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl mb-4">2</span>
+                        <h3 class="text-xl font-bold text-white mb-2">Oferecer a Solução</h3>
+                        <p class="text-gray-400 text-sm">Abordar o cliente com uma proposta irresistível que resolve uma dor urgente, sem custo inicial para ele.</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base flex flex-col items-center">
+                        <span class="bg-accent text-gray-900 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl mb-4">3</span>
+                        <h3 class="text-xl font-bold text-white mb-2">Realizar a Correção</h3>
+                        <p class="text-gray-400 text-sm">Executar as atualizações e otimizações necessárias no perfil do Google Maps do cliente, de forma rápida e precisa.</p>
+                    </div>
+                    <div class="bg-card p-6 rounded-xl shadow-lg border border-base flex flex-col items-center">
+                        <span class="bg-accent text-gray-900 font-bold rounded-full w-12 h-12 flex items-center justify-center text-xl mb-4">4</span>
+                        <h3 class="text-xl font-bold text-white mb-2">Entrega e Recebimento</h3>
+                        <p class="text-gray-400 text-sm">Finalizar o serviço, receber o pagamento e garantir que o cliente perceba o valor imediato do seu trabalho.</p>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-sm mt-8 max-w-2xl mx-auto">Este é o ciclo que você repetirá. Cada passo é um elo em sua corrente de lucro diário. Agora, vamos desvendar os segredos de cada um.</p>
+            </section>
+
+
+            <!-- THE METHOD SECTION -->
+            <section id="method">
+                <h2 class="text-3xl font-bold text-white mb-10 text-center">O Método Secreto: 8 Passos para Desbloquear a Riqueza no Google Maps</h2>
+                <p class="text-center text-gray-400 max-w-2xl mx-auto mb-12">Cada passo é uma chave que destrava um nível de compreensão e ação. Avance para desvendar o segredo completo e transformar seu olhar para o Google Maps em uma fonte de renda diária.</p>
+                <div id="method-steps-container" class="space-y-4">
+                    <!-- Steps will be dynamically generated and populated here -->
+                </div>
+            </section>
+
+            <!-- TOOLS & BONUS SECTION -->
+            <section id="tools-bonus">
+                <h2 class="text-3xl font-bold text-white mb-10 text-center">Ferramentas Essenciais & O Bônus Mestre</h2>
+                <p class="text-center text-gray-400 max-w-2xl mx-auto mb-12">Aqui você encontra as ferramentas que otimizarão seu processo e um bônus que elevará sua capacidade de lucro a um nível estratégico. Esta é a inteligência por trás dos ganhos exponenciais.</p>
+
+                <div id="tools-bonus-container" class="space-y-4">
+                    <!-- Checklist Tool -->
+                    <div class="bg-card p-6 sm:p-8 rounded-xl border border-base shadow-lg">
+                        <div class="flex items-center cursor-pointer" onclick="toggleAccordion('checklist-content')">
+                            <i class="fas fa-tasks fa-2x accent-color mr-4"></i>
+                            <h3 class="text-2xl font-bold text-white flex-grow">Checklist de Oportunidades de Lucro no Google Maps</h3>
+                            <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
+                        </div>
+                        <div id="checklist-content" class="accordion-content mt-4">
+                            <p class="text-gray-400 mb-6">Este checklist é o seu <span class="highlight-text">detector de ouro</span>. Use-o para analisar rapidamente qualquer perfil de negócio no Google Maps e identificar as falhas que <span class="highlight-text">você pode transformar em lucro imediato</span>.</p>
+                            <div class="mb-4">
+                                <input type="text" id="checklist-company-name" placeholder="Nome da Empresa (ex: 'Padaria Sabor Divino')..." class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                            </div>
+                            <div class="mb-4">
+                                <select id="checklist-business-type" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                                    <option value="">Tipo de Negócio (Selecione)</option>
+                                    <option value="restaurante">Restaurante/Pizzaria</option>
+                                    <option value="beleza">Salão de Beleza/Barbearia</option>
+                                    <option value="saude">Clínica de Saúde</option>
+                                    <option value="servicos">Serviços Locais (Eletricista, Limpeza, etc.)</option>
+                                    <option value="loja">Loja de Varejo</option>
+                                    <option value="outros">Outros Negócios</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <input type="text" id="checklist-owner-name" placeholder="Nome do Dono (Opcional)..." class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                            </div>
+
+                            <div id="interactive-checklist" class="space-y-3">
+                                <!-- Checklist items will be dynamically generated by JS -->
+                            </div>
+
+                            <div class="mb-4 mt-3">
+                                <label for="checklist-other-problems" class="text-gray-300 block mb-2">Outros problemas (descreva brevemente):</label>
+                                <textarea id="checklist-other-problems" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none h-20 resize-y" placeholder="Ex: Fotos do interior desorganizadas, promoções antigas na galeria..."></textarea>
+                            </div>
+
+                            <div id="checklist-result" class="mt-6 text-center bg-base p-4 rounded-lg hidden">
+                                <h4 class="text-xl font-bold text-white">Pontuação de Oportunidade</h4>
+                                <p id="checklist-score" class="text-4xl font-extrabold accent-color my-2">0</p>
+                                <p id="checklist-feedback" class="text-gray-400 font-semibold"></p>
+                                <p id="checklist-proposal-value" class="text-gray-300 text-lg mt-2">Valor Sugerido para a Proposta: <span class="font-bold accent-color">R$ 0,00</span></p>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-4">Você acaba de transformar uma análise complexa em um diagnóstico claro e acionável. Isso é poder!</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Script Generator -->
+                    <div class="bg-card p-6 sm:p-8 rounded-xl border border-base shadow-lg">
+                        <div class="flex items-center cursor-pointer" onclick="toggleAccordion('script-generator-content')">
+                            <i class="fas fa-robot fa-2x accent-color mr-4"></i>
+                            <h3 class="text-2xl font-bold text-white flex-grow">Gerador de Scripts Mestre com IA</h3>
+                            <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
+                        </div>
+                        <div id="script-generator-content" class="accordion-content mt-4">
+                            <p class="text-gray-400 mb-6">Nunca mais trave na hora de abordar um cliente! Este gerador de scripts com IA cria mensagens <span class="highlight-text">diretas, persuasivas e personalizadas</span> que quebram barreiras e preparam o terreno para o "sim". Basta preencher e copiar!</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <input type="text" id="script-company-name" placeholder="Nome do Negócio (Ex: 'Cafeteria Aroma')" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                                <input type="text" id="script-owner-name" placeholder="Nome do Dono (Opcional)" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                            </div>
+                            <div class="mb-4">
+                                <select id="script-type" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none">
+                                    <option value="">Tipo de Negócio (Selecione)</option>
+                                    <option value="restaurante">Restaurante/Pizzaria</option>
+                                    <option value="beleza">Salão de Beleza/Barbearia</option>
+                                    <option value="saude">Clínica de Saúde</option>
+                                    <option value="servicos">Serviços Locais (Eletricista, Limpeza, etc.)</option>
+                                    <option value="loja">Loja de Varejo</option>
+                                    <option value="outros">Outros Negócios</option>
+                                </select>
+                            </div>
+                            <p class="text-gray-300 mb-3">Problemas Detectados no Google Maps (Marque os relevantes):</p>
+                            <div id="script-problem-checklist-generator" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Telefone Incorreto/Ausente" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Telefone Incorreto/Ausente</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Fotos Desatualizadas/Ruins" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Fotos Desatualizadas/Ruins</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Informações Incompletas/Horário" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Informações Incompletas/Horário</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Avaliações sem Resposta/Ruins" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Avaliações sem Resposta/Ruins</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Perfil Não Verificado" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Perfil Não Verificado</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Categoria Errada" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Categoria Errada</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Endereço Impreciso" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Endereço Impreciso</span></label>
+                                <label class="flex items-center space-x-2"><input type="checkbox" data-problem="Link do Site Quebrado/Ausente" class="h-4 w-4 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent"><span class="text-gray-300">Link do Site Quebrado/Ausente</span></label>
+                            </div>
+                             <div class="mb-4 mt-3">
+                                <label for="script-other-problems" class="text-gray-300 block mb-2">Outros detalhes personalizados (opcional):</label>
+                                <textarea id="script-other-problems" class="w-full bg-base border border-base rounded-lg p-3 text-white focus:ring-2 focus:ring-accent focus:outline-none h-20 resize-y" placeholder="Ex: Vi uma promoção antiga que poderia ser atualizada..."></textarea>
+                            </div>
+                            
+                            <button id="generate-script-btn" class="w-full bg-accent text-gray-900 font-bold py-3 px-4 rounded-lg hover:bg-emerald-500 transition duration-300">Gerar Script de Abordagem</button>
+
+                            <div id="script-output" class="mt-6 bg-base p-4 rounded-lg border border-base hidden">
+                                <h4 class="text-lg font-bold text-white mb-2">Seu Script Mágico (Copie e Cole!):</h4>
+                                <textarea id="script-text" readonly class="w-full bg-transparent text-gray-300 whitespace-pre-wrap h-40 resize-y border-none focus:outline-none"></textarea>
+                                <button onclick="copyToClipboard('script-text')" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300 mt-2">
+                                    Copiar Script <i class="fas fa-copy ml-2"></i>
+                                </button>
+                                <p class="text-gray-500 text-sm mt-2">Seu script está pronto! Cada linha é um passo mais perto de fechar um novo cliente.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BONUS FINAL - O Segredo Mestre Revelado -->
+                    <div class="bg-card p-6 sm:p-8 rounded-xl border border-base shadow-lg bg-gradient-to-br from-indigo-900 to-purple-900">
+                        <div class="flex items-center cursor-pointer" onclick="toggleAccordion('bonus-final-content')">
+                            <i class="fas fa-lock fa-2x text-yellow-400 mr-4"></i>
+                            <h3 class="text-2xl font-bold text-white flex-grow">BÔNUS FINAL: Automatização e Otimização com IA Externa</h3>
+                            <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
+                        </div>
+                        <div id="bonus-final-content" class="accordion-content mt-4">
+                            <h4 class="text-xl font-bold text-white mb-4">O Poder da Automação na Sua Jornada de Lucro!</h4>
+                            <p class="text-gray-400 mb-4">Você dominou o método manual. Agora, vamos elevar seu jogo. O verdadeiro segredo para escalar seus ganhos e atingir múltiplos milhares por semana está em <span class="highlight-text">automatizar e otimizar com Inteligência Artificial externa</span>.</p>
+                            <p class="text-gray-400 mb-4">Esta seção não é sobre ferramentas automáticas "mágicas" dentro desta página, mas sobre como você pode usar IAs poderosas como <span class="highlight-text">ChatGPT, Gemini e outras</span> para multiplicar sua eficiência, reduzir seu tempo de trabalho e potencializar suas abordagens.</p>
+
+                            <p class="text-gray-400 mb-4 font-bold text-lg">Como a IA Externa Acelera Seus Ganhos:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><strong>Automatizar Diagnósticos (Pesquisa Inteligente):</strong>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Como:</span> Utilize prompts em IAs para que elas busquem e resumam informações de perfis online (seja no Google Maps ou outros diretórios) e apontem potenciais falhas.</li>
+                                        <li><span class="highlight-text">Exemplo de Prompt:</span> "Atue como um analista de SEO local. Analise o perfil do Google Maps para a 'Padaria Sabor Divino' em São Paulo. Liste as 5 principais falhas ou oportunidades de otimização que você encontra, com foco em informações incompletas, fotos ruins, falta de resposta a avaliações e verificação."</li>
+                                        <li><span class="highlight-text">Benefício:</span> Reduz drasticamente o tempo gasto na fase de "Olhar de Raio-X", permitindo analisar dezenas de negócios em minutos.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Gerar Scripts em Massa (Personalização em Escala):</strong>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Como:</span> Forneça à IA uma lista de problemas e tipos de negócio, e peça para gerar variações de scripts.</li>
+                                        <li><span class="highlight-text">Exemplo de Prompt:</span> "Gere 10 scripts curtos para WhatsApp, um para cada tipo de negócio (restaurante, salão, clínica), abordando o problema de 'telefone incorreto no Google Maps'. O script deve ser direto, persuasivo e terminar com uma CTA para corrigir o problema hoje. Varie o tom ligeiramente para cada tipo de negócio."</li>
+                                        <li><span class="highlight-text">Benefício:</span> Tenha um arsenal de scripts prontos para diferentes situações e nichos, otimizando seu tempo de abordagem.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Criar Ofertas Irresistíveis em Segundos:</strong>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Como:</span> Use a IA para refinar sua proposta de valor e criar ofertas complementares.</li>
+                                        <li><span class="highlight-text">Exemplo de Prompt:</span> "Crie 3 opções de proposta para um serviço de 'correção de telefone no Google Maps', com valores de R$50, R$80 e R$120. Para cada proposta, justifique o valor com os benefícios diretos para o cliente, usando gatilhos mentais como urgência e prova social."</li>
+                                        <li><span class="highlight-text">Benefício:</span> Venda mais e com valores agregados, otimizando sua margem de lucro sem esforço criativo.</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Prompts Otimizados para IA (Sua Chave Mestra):</strong>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">O que são:</span> São as instruções precisas que você dá à IA para obter os melhores resultados. Pense neles como o "código" para desbloquear todo o potencial da inteligência artificial.</li>
+                                        <li><span class="highlight-text">Importância:</span> Um bom prompt transforma uma resposta genérica em uma ferramenta de alta conversão. Quanto mais específico e inteligente seu prompt, mais valiosa será a saída da IA.</li>
+                                        <li><span class="highlight-text">Ação:</span> Passe um tempo aprendendo a estruturar seus prompts. Inclua: Persona (Atue como...), Tarefa (Gere X...), Contexto (Considerando Y...), Formato (Em Z formato...), Restrições (Sem jargões...).</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <p class="text-gray-400 mt-4">Essa é a sua ponte para a automação e a escalabilidade massiva. Com a IA externa, você não apenas atenderá mais clientes, mas transformará seu tempo em lucros exponenciais. O futuro da sua liberdade financeira está na sua mão!</p>
+                            <p class="text-gray-500 text-sm mt-4">Você acaba de desbloquear o nível MESTRE! Sua capacidade de lucro não tem mais limites.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="text-center py-10 mt-16 border-t-2 border-base text-gray-500">
+            <p>&copy; 2025 Mapeando Riquezas. Todos os direitos reservados.</p>
+            <p class="text-sm">Construído para transformar conhecimento em resultados.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = {
+                methodology: [
+                    {
+                        id: 'step1',
+                        title: '1. 🔍 Escaneamento Milionário: Desvende Tesouros Ocultos no Mapa',
+                        icon: 'fa-eye',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">1. 🔍 Escaneamento Milionário: Desvende Tesouros Ocultos no Mapa</h4>
+                            <p class="text-gray-400 mb-4">Prepare-se para o que poucos ousam ver. Não se trata de grandes investimentos, nem de estratégias complexas. O lucro que você busca está camuflado em simples interações no Google Maps, em detalhes que a maioria ignora. Este é o seu portal para um fluxo de renda diário, sem capital inicial e com retornos imediatos. </p>
+                            <p class="text-gray-400 mb-4">Muitos olham para o Google Maps apenas como um mapa. Você, a partir de agora, o verá como um <span class="highlight-text">território inexplorado de oportunidades financeiras</span>. Pense em pequenos negócios, serviços essenciais, aqueles que dependem da visibilidade local para sobreviver. Eles estão lá, visíveis, mas vulneráveis. E é nessa vulnerabilidade que reside a sua mina de ouro.</p>
+                            <p class="text-gray-400 mb-4">Você está prestes a decifrar o código. A primeira etapa é abrir os olhos para o invisível, para os <span class="highlight-text">elos perdidos</span> que conectam empresas a clientes, mas que, por descuido, estão rompidos. </p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li>Abra o Google Maps no seu computador ou celular.</li>
+                                <li>Digite "restaurante", "salão de beleza", "clínica", ou qualquer tipo de serviço em sua cidade/bairro.</li>
+                                <li>Role a lista de resultados. Não clique ainda. Apenas observe as aparências dos perfis, buscando aqueles que parecem "abandonados" ou incompletos.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step1-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step1-check" class="text-gray-300">Verificação: Você já olhou para o Google Maps com esse novo olhar?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step2',
+                        title: '2. 🧭 Coordenadas de Lucro: Encontre as Feridas Abertas no Perfil',
+                        icon: 'fa-x-ray',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">2. 🧭 Coordenadas de Lucro: Encontre as Feridas Abertas no Perfil</h4>
+                            <p class="text-gray-400 mb-4">Agora, o foco. Não procure por "problemas complexos", mas por <span class="highlight-text">falhas sutis e, muitas vezes, óbvias</span>, que as empresas locais deixam expostas. São brechas na comunicação, pontos de contato que falham, ou informações cruciais que simplesmente não levam o cliente ao negócio.</p>
+                            <p class="text-gray-400 mb-4">Seu olhar de raio-x vai se concentrar em um detalhe que, quando corrigido, <span class="highlight-text">desbloqueia um fluxo imediato de clientes</span> para a empresa. E, por consequência, um fluxo de dinheiro para você. Sem ele, a empresa está perdendo oportunidades a cada minuto.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li>Clique em cada perfil de negócio da sua lista no Google Maps.</li>
+                                <li>Procure por:
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Telefone Incorreto/Ausente:</span> Tente ligar. Se não funciona, é OURO!</li>
+                                        <li>Fotos de baixa qualidade, antigas ou inexistentes.</li>
+                                        <li>Horário de funcionamento incompleto ou sem o status "Aberto/Fechado".</li>
+                                        <li>Avaliações sem nenhuma resposta do proprietário.</li>
+                                        <li>Website não vinculado ou link quebrado.</li>
+                                        <li>Endereço com pin errado no mapa.</li>
+                                        <li>Categoria principal errada (ex: um pet shop classificado como "loja de ferragens").</li>
+                                    </ul>
+                                </li>
+                                <li>Use o "Checklist de Oportunidades" na seção "Ferramentas & Bônus" para um diagnóstico guiado e mais detalhado.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step2-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step2-check" class="text-gray-300">Verificação: Você já encontrou pelo menos 3 empresas com brechas críticas?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step3',
+                        title: '3. 📍 Pontos Cegos de Riqueza: Valide a Falha sem Ser Notado',
+                        icon: 'fa-shield-alt',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">3. 📍 Pontos Cegos de Riqueza: Valide a Falha sem Ser Notado</h4>
+                            <p class="text-gray-400 mb-4">Você identificou uma potencial brecha. Agora, o passo crucial: a <span class="highlight-text">validação discreta</span>. Não cometa o erro de abordar o cliente antes de ter 100% de certeza. Este é o momento da investigação silenciosa, onde você confirma que a oportunidade é real e lucrativa, sem levantar suspeitas.</p>
+                            <p class="text-gray-400 mb-4">A validação envolve um teste simples, um "clique" estratégico que revelará se a falha existe e qual a sua dimensão. É como um espião confirmando a inteligência, garantindo que o alvo está vulnerável e pronto para sua intervenção. Este teste é rápido, não invasivo e lhe dará a certeza de que a venda será praticamente garantida.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li>Para cada brecha identificada (principalmente telefone e endereço), <span class="highlight-text">simule a ação de um cliente real</span>:
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Telefone:</span> Tente ligar para o número do GMN. Ele funciona? É o número certo? Cair em "não existe" ou "caixa postal cheia" é um sinal enorme.</li>
+                                        <li><span class="highlight-text">Endereço:</span> Use o "rotas" do Google Maps. A localização do pin é exata ou o cliente terá dificuldades para chegar?</li>
+                                        <li><span class="highlight-text">Website:</span> Clique no link do site. Ele funciona? É relevante?</li>
+                                        <li><span class="highlight-text">Horário:</span> Tente verificar se o horário exibido bate com a realidade (se puder checar discretamente, sem entrar no local).</li>
+                                    </ul>
+                                </li>
+                                <li><span class="highlight-text">Importante:</span> Faça isso sem que a empresa perceba que está sendo "testada". Sua discrição é a chave.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step3-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step3-check" class="text-gray-300">Verificação: Você validou a brecha e tem certeza do impacto que ela causa?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step4',
+                        title: '4. 🗺️ Mapa das Oportunidades: Conecte-se com o Decisor Sem Barreiras',
+                        icon: 'fa-link',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">4. 🗺️ Mapa das Oportunidades: Conecte-se com o Decisor Sem Barreiras</h4>
+                            <p class="text-gray-400 mb-4">Com a brecha identificada e validada, o próximo desafio é alcançar quem tem o poder de decisão. Não perca tempo com intermediários. Você precisa da <span class="highlight-text">conexão direta</span>, do acesso imediato ao proprietário ou gerente, alguém que sinta a dor da perda de clientes.</p>
+                            <p class="text-400 mb-4">Existem táticas específicas para furar a "barreira de entrada" e falar com a pessoa certa, aquela que compreende o impacto de um fluxo de clientes comprometido. Você não pedirá uma reunião, mas sim oferecerá uma <span class="highlight-text">descoberta urgente</span>, algo que eles precisam saber agora.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><span class="highlight-text">Priorize o contato pessoal (se possível):</span> Vá até o estabelecimento em um horário de menor movimento. Peça para falar rapidamente com o responsável ou o proprietário. A conexão olho no olho é poderosa.</li>
+                                <li><span class="highlight-text">Contato por Telefone (se pessoal não for viável):</span> Ligue para o número da empresa (não o do GMN se estiver errado!). Peça para falar com o dono/gerente. Seja direto e explique o motivo da ligação de forma concisa e intrigante.</li>
+                                <li><span class="highlight-text">Redes Sociais (último recurso para primeiro contato):</span> Envie uma DM (Direct Message) profissional no Instagram ou Facebook da empresa. "Olá, sou [Seu Nome]. Notei uma oportunidade no seu Google Maps que pode estar impactando clientes. Posso explicar em 2 minutos?"</li>
+                                <li><span class="highlight-text">Evite e-mail no primeiro contato:</span> É uma armadilha, mais fácil de ser ignorado.</li>
+                                <li><span class="highlight-text">Foco:</span> Seu objetivo é ter 2 minutos da atenção do decisor para apresentar a "descoberta urgente". Menos é mais.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step4-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step4-check" class="text-gray-300">Verificação: Você já conseguiu a atenção do decisor de uma empresa?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step5',
+                        title: '5. 🎯 Alvo Comercial Estratégico: O Script que Converte Sem "Vender"',
+                        icon: 'fa-hand-holding-usd',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">5. 🎯 Alvo Comercial Estratégico: O Script que Converte Sem "Vender"</h4>
+                            <p class="text-gray-400 mb-4">Esta é a sua arma secreta. O script que fará o empresário dizer "SIM" antes mesmo de pensar. A chave? Não pedir nenhum centavo para ele. Sua proposta será sobre <span class="highlight-text">solução imediata</span> para um problema que ele já tem, sem custos iniciais ou burocracia para ele.</p>
+                            <p class="text-gray-400 mb-4">Seu discurso será uma oferta de valor tão alta, com risco tão baixo (praticamente zero para ele), que será irracional recusar. Você vai tocar na dor mais profunda dele: a perda de clientes e faturamento, e oferecer a cura instantânea. Utilize a técnica AIDA: Chame a <span class="highlight-text">Atenção</span> para a falha, gere <span class="highlight-text">Interesse</span> na solução, crie <span class="highlight-text">Desejo</span> pelo resultado e finalize com uma <span class="highlight-text">Ação</span> simples.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><span class="highlight-text">Atenção (Choque Revelador):</span> "Sr(a). [Nome do Dono], descobri algo URGENTE que está fazendo sua [empresa] perder clientes AGORA no Google Maps." (Mostre a brecha - ex: telefone incorreto).</li>
+                                <li><span class="highlight-text">Interesse (O Impacto da Dor):</span> "Pense em quantos clientes tentam te ligar e desistem porque o número está errado. Isso é dinheiro que está indo para o lixo, e eles estão indo para o concorrente."</li>
+                                <li><span class="highlight-text">Desejo (A Cura Imediata):</span> "Eu posso corrigir isso para você em POUCOS MINUTOS. Vou garantir que seu telefone esteja 100% visível e funcional no Google Maps, trazendo de volta esses clientes perdidos."</li>
+                                <li><span class="highlight-text">Ação (A Proposta Sem Risco):</span> "Meu serviço para resolver isso agora custa apenas [Seu Preço, ex: R$ 70,00]. É um valor único, pago apenas se a correção for feita com sucesso. Você não tem nada a perder e tudo a ganhar. Podemos resolver isso agora?"</li>
+                                <li>Use o "Gerador de Scripts Mestre" na seção "Ferramentas & Bônus" para adaptar seu script.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step5-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step5-check" class="text-gray-300">Verificação: Você praticou seu script e sentiu o poder da oferta sem risco?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step6',
+                        title: '6. 💬 Abordagem de Impacto Local: A Correção Cirúrgica',
+                        icon: 'fa-bolt',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">6. 💬 Abordagem de Impacto Local: A Correção Cirúrgica</h4>
+                            <p class="text-gray-400 mb-4">A beleza deste método reside na sua <span class="highlight-text">simplicidade de execução</span>. Uma vez que o "SIM" é conquistado, a ação que você vai realizar para "corrigir" a brecha é tão rápida e eficiente que você mal acreditará no potencial de lucro que ela esconde. Isso não é um serviço demorado; é uma <span class="highlight-text">intervenção cirúrgica</span> que gera resultados imediatos.</p>
+                            <p class="text-gray-400 mb-4">Você não precisa de habilidades técnicas avançadas, nem de softwares caros. O Google Maps e um conhecimento preciso do problema são suas únicas ferramentas. O tempo de execução de cada "missão" será de minutos, permitindo que você repita o processo várias vezes ao dia. Essa agilidade é a base do seu <span class="highlight-text">fluxo de renda diário e consistente</span>.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro (Exemplo: Telefone Incorreto):</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><span class="highlight-text">Cenário 1: Perfil NÃO reivindicado (você verá "Reivindique esta empresa"):</span>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li>No Google Maps, clique em "Sugerir uma edição" no perfil da empresa.</li>
+                                        <li>Selecione "Alterar nome ou outros detalhes".</li>
+                                        <li>Vá na seção "Número de telefone" e insira o número CORRETO (peça ao dono ou busque no site oficial da empresa).</li>
+                                        <li>Envie a sugestão. O Google geralmente aprova rápido edições que visam a correção de dados básicos, pois busca manter a plataforma precisa.</li>
+                                        <li><span class="highlight-text">Dica Extra (Poderosa):</span> Se o dono se sentir à vontade, peça a ele para te adicionar como "gerente" no Google Meu Negócio dele (business.google.com). Isso te dará controle total para edições instantâneas e futuras otimizações.</li>
+                                    </ul>
+                                </li>
+                                <li><span class="highlight-text">Cenário 2: Perfil JÁ reivindicado pelo dono:</span>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li>O dono precisará acessar o Google Meu Negócio dele (business.google.com).</li>
+                                        <li>Guie-o (pessoalmente, por telefone ou videochamada, se necessário) até a seção de "Informações" e para editar o campo "Telefone".</li>
+                                        <li>Ele insere o número correto e salva. A atualização é instantânea.</li>
+                                        <li><span class="highlight-text">Seja o Mentor:</span> Sua presença e orientação tornam o processo fácil para ele, solidificando sua posição como especialista.</li>
+                                    </ul>
+                                </li>
+                                <li><span class="highlight-text">Correção de Outras Brechas (Exemplos Rápidos e Eficientes):</span>
+                                    <ul class="list-circle list-inside ml-4">
+                                        <li><span class="highlight-text">Fotos Ruins/Ausentes:</span> Peça fotos de alta qualidade do interior, exterior, produtos/serviços e equipe. No GMN, faça o upload e categorize-as corretamente. Sugira que ele tire novas fotos com o celular.</li>
+                                        <li><span class="highlight-text">Horário Incompleto/Desatualizado:</span> Preencha todos os dias e horários no GMN, incluindo horários especiais para feriados. Isso evita que clientes apareçam quando o local está fechado.</li>
+                                        <li><span class="highlight-text">Endereço Impreciso:</span> No GMN, ajuste o "pin" no mapa para a localização exata do negócio. Um cliente perdido é uma venda perdida.</li>
+                                        <li><span class="highlight-text">Avaliações Não Respondidas:</span> No GMN, responda profissionalmente a todas as avaliações, sejam elas positivas ou negativas. Respostas negativas mostram que a empresa se importa e está disposta a resolver.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <p class="text-gray-400 mt-4">A chave é a agilidade e a precisão. Cada correção é um passo para mais visibilidade e, consequentemente, mais lucro para o seu cliente (e para você!).</p>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step6-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step6-check" class="text-gray-300">Verificação: Você já corrigiu a primeira brecha e viu a mudança no Google Maps?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step7',
+                        title: '7. 🧪 Diagnóstico com Script: O Saque Diário Pelo Valor Gerado',
+                        icon: 'fa-money-bill-wave',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">7. 🧪 Diagnóstico com Script: O Saque Diário Pelo Valor Gerado</h4>
+                            <p class="text-gray-400 mb-4">Sua expertise gerou valor. Agora, é hora de garantir que esse valor retorne para você de forma rápida e previsível. A estrutura de recebimento neste método é pensada para ser <span class="highlight-text">simples, transparente e, acima de tudo, diária</span>. Sem esperas, sem burocracia.</p>
+                            <p class="text-gray-400 mb-4">Você aprenderá a estabelecer termos de pagamento que valorizem seu tempo e a urgência da solução que você oferece. O empresário, aliviado por ter o problema resolvido, estará mais do que disposto a remunerá-lo pelo serviço pontual e eficaz. Pense em um sistema onde, a cada "missão" concluída, sua conta recebe uma injeção de capital.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><span class="highlight-text">Pagamento na Conclusão:</span> O ideal para serviços rápidos como este é o pagamento imediato após a correção. Assim que o Google Maps atualizar ou o cliente confirmar a mudança, é o momento. "Sr(a). [Nome do Dono], o telefone já está atualizado no Google Maps! Seus clientes já podem te encontrar e o impacto será imediato. O valor do nosso serviço é de R$ [Seu Preço] e você pode pagar via Pix/transferência agora mesmo. O que você prefere?"</li>
+                                <li><span class="highlight-text">Simplicidade é Chave:</span> Mantenha o processo de pagamento o mais simples possível. Ofereça Pix para agilidade e praticidade.</li>
+                                <li><span class="highlight-text">Valor Percebido:</span> Reforce que o valor pago é irrisório comparado aos clientes e vendas que ele estava perdendo. A solução que você entregou vale muito mais do que ele pagou.</li>
+                                <li><span class="highlight-text">Repetição é Renda:</span> Assim que receber o pagamento, você está pronto para a próxima "missão". A velocidade de recebimento é crucial para o seu lucro diário e para acumular os R$1.000+ na primeira semana.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step7-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step7-check" class="text-gray-300">Verificação: Você já recebeu seu primeiro pagamento por uma correção?</label>
+                            </div>
+                        `
+                    },
+                    {
+                        id: 'step8',
+                        title: '8. 🚀 Disparo de Conversão: Multiplicando Ganhos com Estratégias Avançadas',
+                        icon: 'fa-layer-group',
+                        content: `
+                            <h4 class="text-xl font-bold text-white mb-4">8. 🚀 Disparo de Conversão: Multiplicando Ganhos com Estratégias Avançadas</h4>
+                            <p class="text-gray-400 mb-4">Você já domina a arte de encontrar, abordar e solucionar a brecha que gera lucro. Agora, a pergunta é: como ir de R$1.000 para R$5.000, R$10.000 por semana? A resposta está na <span class="highlight-text">multiplicação discreta</span>. São técnicas para automatizar partes do processo e identificar oportunidades em volume, sem levantar bandeiras.</p>
+                            <p class="text-gray-400 mb-4">Isso envolve refinar sua prospecção, talvez utilizando ferramentas que amplificam sua capacidade de encontrar as "brechas" em escala, ou otimizando seus scripts para conversões ainda mais rápidas. A ideia é trabalhar de forma mais inteligente, não mais difícil, transformando cada minuto investido em lucro maximizado.</p>
+                            <p class="text-gray-400 mb-4 font-bold text-white">Sua Ação - O Roteiro:</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-300">
+                                <li><span class="highlight-text">Otimize sua Prospecção:</span> Utilize o "Checklist de Oportunidades" na seção de ferramentas para agilizar o diagnóstico de novos clientes. Ele é seu mapa do tesouro para encontrar mais "feridas abertas".</li>
+                                <li><span class="highlight-text">Refine Seus Scripts:</span> Use o "Gerador de Scripts Mestre com IA" para criar mensagens ainda mais eficazes e adaptadas a cada situação, maximizando suas taxas de "sim".</li>
+                                <li><span class="highlight-text">Foque em Volume:</span> O segredo da escalada é fazer várias micro-correções por dia. Quanto mais brechas você encontrar e corrigir, maior seu lucro. Pense em escala.</li>
+                                <li><span class="highlight-text">Crie um Ciclo Virtuoso de Indicações:</span> Clientes satisfeitos são seus melhores vendedores. Peça indicações após cada serviço bem-sucedido e até ofereça uma pequena comissão ou desconto para eles.</li>
+                                <li><span class="highlight-text">Reinvista no Conhecimento e Ferramentas:</span> Mantenha-se atualizado sobre novas brechas e oportunidades no Google Maps. Considere investir nas ferramentas de IA externas (apresentadas no Bônus Final) para automatizar ainda mais seu processo.</li>
+                            </ul>
+                            <div class="mt-4 p-3 bg-gray-700 rounded-lg flex items-center space-x-3">
+                                <input type="checkbox" id="step8-check" class="h-5 w-5 rounded bg-gray-800 border-gray-600 text-accent focus:ring-accent">
+                                <label for="step8-check" class="text-gray-300">Verificação: Você já aplicou as estratégias de multiplicação?</label>
+                            </div>
+                        `
+                    }
+                ],
+                checklistItems: [
+                    { id: 'no-phone', label: 'Telefone Incorreto/Ausente', value: 3 },
+                    { id: 'no-photos', label: 'Fotos Desatualizadas/Ruins', value: 2 },
+                    { id: 'wrong-address', label: 'Endereço Impreciso no Mapa', value: 3 },
+                    { id: 'wrong-category', label: 'Categoria Errada/Incompleta', value: 2 },
+                    { id: 'incomplete-info', label: 'Informações Incompletas (Horário, etc.)', value: 1 },
+                    { id: 'no-website-link', label: 'Link do Site Quebrado/Ausente', value: 1 },
+                    { id: 'low-reviews', label: 'Avaliações Baixas/Sem Resposta do Dono', value: 3 },
+                    { id: 'not-verified', label: 'Perfil NÃO VERIFICADO ("Reivindique esta empresa")', value: 5 } // Alto valor, pois é uma falha fundamental
+                ],
+                scalingStrategies: [
+                    { title: 'Programa de Indicações', icon: 'fa-users', description: 'Ofereça descontos ou bônus para clientes que indicarem novos negócios. É a forma mais barata e eficaz de crescer.' },
+                    { title: 'Cases de Sucesso', icon: 'fa-trophy', description: 'Transforme seus resultados em depoimentos e estudos de caso para apresentar a novos prospectos e provar seu valor.' },
+                    { title: 'Parcerias Estratégicas', icon: 'fa-hands-helping', description: 'Conecte-se com web designers, agências de marketing e contadores. Eles podem terceirizar a gestão de GMN para você.' },
+                    { title: 'Criação de Autoridade', icon: 'fa-bullhorn', description: 'Use o LinkedIn e Instagram para compartilhar dicas sobre marketing local. Posicione-se como um especialista na área.' },
+                    { title: 'Diversificação de Fontes', icon: 'fa-binoculars', description: 'Não se limite ao Google Maps. Explore grupos de Facebook, diretórios online e eventos locais para encontrar oportunidades.' },
+                    { title: 'Ofertas Atrativas', icon: 'fa-tags', description: 'Crie pacotes de lançamento, garantias de resultado ou ofereça um bônus (como um mini-treinamento) para fechar mais negócios.' }
+                ]
+            };
+
+            // Global accordion toggle function
+            window.toggleAccordion = function(id) {
+                const content = document.getElementById(id);
+                const icon = content.previousElementSibling.querySelector('.fa-chevron-down');
+                if (content.classList.contains('expanded')) {
+                    content.classList.remove('expanded');
+                    icon.classList.remove('rotate-180');
+                } else {
+                    // Close all other accordions within the same parent container (if any)
+                    const parentContainer = content.closest('#method-steps-container') || content.closest('#tools-bonus-container');
+                    if (parentContainer) {
+                        parentContainer.querySelectorAll('.accordion-content.expanded').forEach(item => {
+                            if (item !== content) { // Don't close itself
+                                item.classList.remove('expanded');
+                                const prevSibling = item.previousElementSibling;
+                                if (prevSibling) {
+                                    const prevIcon = prevSibling.querySelector('.fa-chevron-down');
+                                    if (prevIcon) prevIcon.classList.remove('rotate-180');
+                                }
+                            }
+                        });
+                    }
+                    content.classList.add('expanded');
+                    icon.classList.add('rotate-180');
+                }
+            };
+
+            // Methodology Steps Initialization
+            const methodStepsContainer = document.getElementById('method-steps-container'); 
+            
+            data.methodology.forEach((step, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'bg-card p-6 sm:p-8 rounded-xl border border-base shadow-lg';
+                stepElement.innerHTML = `
+                    <div class="flex items-center cursor-pointer" onclick="toggleAccordion('method-step-content-${step.id}')">
+                        <span class="step-number transition-transform duration-300 w-10 h-10 rounded-full bg-gray-700 text-white font-bold flex items-center justify-center mr-4">${index + 1}</span>
+                        <h3 class="step-title font-bold text-lg text-white flex-grow">${step.title}</h3>
+                        <i class="fas ${step.icon} text-gray-400 mr-4"></i>
+                        <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300"></i>
+                    </div>
+                    <div id="method-step-content-${step.id}" class="accordion-content">
+                        ${step.content}
+                    </div>
+                `;
+                if (methodStepsContainer) {
+                    methodStepsContainer.appendChild(stepElement);
+                } else {
+                    console.error("Element with ID 'method-steps-container' not found. Cannot append method steps.");
+                }
+            });
+
+            // Interactive Checklist
+            const interactiveChecklistDiv = document.getElementById('interactive-checklist');
+            const checklistResult = document.getElementById('checklist-result');
+            const checklistScore = document.getElementById('checklist-score');
+            const checklistFeedback = document.getElementById('checklist-feedback');
+            const checklistProposalValue = document.querySelector('#checklist-proposal-value span');
+            const checklistOtherProblems = document.getElementById('checklist-other-problems');
+            
+            if (interactiveChecklistDiv) {
+                data.checklistItems.forEach(item => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center space-x-3 bg-base p-3 rounded-lg cursor-pointer hover:bg-gray-800 transition';
+                    label.innerHTML = `
+                        <input type="checkbox" data-id="${item.id}" data-value="${item.value}" class="checklist-box h-5 w-5 rounded bg-gray-700 border-gray-600 text-accent focus:ring-accent">
+                        <span class="text-gray-300">${item.label}</span>
+                    `;
+                    interactiveChecklistDiv.appendChild(label);
+                });
+
+                function calculateChecklistScore() {
+                    let totalScore = 0;
+                    const checkedBoxes = interactiveChecklistDiv.querySelectorAll('input:checked');
+                    checkedBoxes.forEach(box => {
+                        totalScore += parseInt(box.dataset.value);
+                    });
+                    
+                    checklistScore.textContent = totalScore;
+                    
+                    if (totalScore === 0) {
+                        checklistResult.classList.add('hidden');
+                    } else {
+                        checklistResult.classList.remove('hidden');
+                    }
+
+                    if (totalScore <= 5) {
+                        checklistFeedback.textContent = 'Oportunidade Média. Problemas pontuais, fáceis de resolver. Valor de proposta sugerido: R$ 50 - R$ 100.';
+                        checklistProposalValue.textContent = 'R$ 50,00 - R$ 100,00';
+                    } else if (totalScore <= 10) {
+                        checklistFeedback.textContent = 'Oportunidade Alta! A empresa está claramente perdendo clientes. Sua solução é muito valiosa. Valor de proposta sugerido: R$ 100 - R$ 250.';
+                        checklistProposalValue.textContent = 'R$ 100,00 - R$ 250,00';
+                    } else {
+                        checklistFeedback.textContent = 'Oportunidade Altíssima! Este perfil está em estado crítico. Seu serviço é urgente! Valor de proposta sugerido: R$ 250 - R$ 500+';
+                        checklistProposalValue.textContent = 'R$ 250,00 - R$ 500+';
+                    }
+                }
+
+                interactiveChecklistDiv.addEventListener('change', calculateChecklistScore);
+                checklistOtherProblems.addEventListener('input', calculateChecklistScore); // Also trigger on text input
+            } else {
+                console.error("Element with ID 'interactive-checklist' not found.");
+            }
+
+
+            // AI Script Generator Logic
+            const scriptCompanyNameInput = document.getElementById('script-company-name');
+            const scriptOwnerNameInput = document.getElementById('script-owner-name');
+            const scriptTypeSelect = document.getElementById('script-type');
+            const scriptProblemChecklistGenerator = document.getElementById('script-problem-checklist-generator'); // Renamed for clarity
+            const scriptOtherProblemsInput = document.getElementById('script-other-problems');
+            const generateScriptBtn = document.getElementById('generate-script-btn');
+            const scriptOutput = document.getElementById('script-output');
+            const scriptTextarea = document.getElementById('script-text');
+
+            if (generateScriptBtn) { 
+                generateScriptBtn.addEventListener('click', () => {
+                    const companyName = scriptCompanyNameInput.value.trim() || '[Nome do Negócio]';
+                    const ownerName = scriptOwnerNameInput.value.trim();
+                    const businessType = scriptTypeSelect.value;
+                    const selectedProblems = Array.from(scriptProblemChecklistGenerator.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.dataset.problem);
+                    const otherProblemsText = scriptOtherProblemsInput.value.trim();
+
+                    let greeting = ownerName ? `Olá, ${ownerName}!` : `Olá!`;
+                    let intro = `Sou [Seu Nome], especialista em visibilidade digital para negócios locais.`;
+                    
+                    let problemStatement = `Enquanto analisava o perfil do(a) ${companyName} no Google Maps, notei alguns pontos cruciais que podem estar custando clientes agora:`;
+                    let problemDetails = [];
+
+                    if (selectedProblems.length > 0) {
+                        problemDetails = selectedProblems.map(p => `- ${p}.`);
+                    }
+                    if (otherProblemsText) {
+                        problemDetails.push(`- Outros detalhes que observei: ${otherProblemsText}.`);
+                    }
+
+                    let problemSentence;
+                    if (problemDetails.length > 0) {
+                        problemSentence = problemStatement + '\n' + problemDetails.join('\n');
+                    } else {
+                        problemSentence = `Recentemente, notei que o perfil do(a) ${companyName} no Google Maps tem um potencial enorme para atrair mais clientes, mas talvez não esteja sendo totalmente aproveitado.`;
+                    }
+
+                    let benefit = `\nCada um desses detalhes faz com que clientes potenciais não encontrem ou desistam de entrar em contato com você. Eu posso corrigir isso AGORA para você, garantindo que o ${companyName} apareça para quem realmente precisa do seu serviço e transforme essas visitas em vendas.`;
+                    let callToAction = `\nMeu serviço para resolver isso custa apenas [Seu Preço, ex: R$70]. É um pagamento único, pago apenas se a correção for feita com sucesso. Você não tem nada a perder e tudo a ganhar. Podemos resolver isso agora?`;
+
+                    let fullScript = `${greeting}\n${intro}\n${problemSentence}\n${benefit}\n${callToAction}`;
+                    
+                    scriptTextarea.value = fullScript;
+                    scriptOutput.classList.remove('hidden');
+                    scriptOutput.classList.add('fade-in');
+                });
+            } else {
+                console.error("Element with ID 'generate-script-btn' not found.");
+            }
+
+
+            window.copyToClipboard = function(elementId) {
+                const element = document.getElementById(elementId);
+                element.select();
+                element.setSelectionRange(0, 99999); // For mobile devices
+                document.execCommand('copy');
+                alert("Script copiado para a área de transferência!"); // User-friendly feedback
+            };
+
+            // Scaling Strategies
+            const scalingContainer = document.getElementById('scaling-strategies-container');
+            if (scalingContainer) { // Ensure container exists
+                data.scalingStrategies.forEach(strategy => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-card p-6 rounded-xl border border-base shadow-lg text-center';
+                    card.innerHTML = `
+                        <i class="fas ${strategy.icon} fa-2x accent-color mb-4"></i>
+                        <h4 class="text-lg font-bold text-white mb-2">${strategy.title}</h4>
+                        <p class="text-gray-400 text-sm">${strategy.description}</p>
+                    `;
+                    scalingContainer.appendChild(card);
+                });
+            } else {
+                console.error("Element with ID 'scaling-strategies-container' not found.");
+            }
+
+
+            // Profit Chart Initialization
+            const ctx = document.getElementById('profitChart');
+            if (ctx) { // Ensure canvas element exists
+                new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['5 Contatos', '10 Contatos', '20 Contatos', '30 Contatos', '50 Contatos'],
+                        datasets: [{
+                            label: 'Lucro Potencial Semanal (R$)',
+                            data: [350, 700, 1400, 2100, 3500], /* Assuming R$70/correction */
+                            backgroundColor: 'rgba(52, 211, 153, 0.8)', /* Accent Color - Green */
+                            borderColor: 'rgba(52, 211, 153, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Lucro Potencial Mensal (R$)',
+                            data: [1400, 2800, 5600, 8400, 14000], /* Weekly * 4 */
+                            backgroundColor: 'rgba(74, 85, 104, 0.8)', /* Darker gray for monthly */
+                            borderColor: 'rgba(74, 85, 104, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true, // Display legend for multiple datasets
+                                position: 'top',
+                                labels: {
+                                    color: '#E5E7EB' /* Light gray */
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(55, 65, 81, 0.5)' /* Border base with transparency */
+                                },
+                                ticks: {
+                                    color: '#A0A0A0', /* Muted text */
+                                    callback: function(value) {
+                                        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(55, 65, 81, 0.5)' /* Border base with transparency */
+                                },
+                                ticks: {
+                                    color: '#A0A0A0', /* Muted text */
+                                    callback: function(value, index, values) {
+                                        return this.getLabelForValue(value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error("Canvas element with ID 'profitChart' not found.");
+            }
+
+
+            // Smooth scrolling for nav links
+            document.querySelectorAll('a.nav-link').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
